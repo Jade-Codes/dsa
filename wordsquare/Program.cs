@@ -97,7 +97,6 @@ namespace wordsquare
         {
             if (wordSquare.Count == length)
             {
-                Console.WriteLine("Valid word square");
                 return new List<string>(wordSquare);
             }
 
@@ -109,29 +108,32 @@ namespace wordsquare
                 prefixBuilder.Append(wordSquare[i][currentIndex]);
             }
             var prefix = prefixBuilder.ToString();
+
+            var validWordsByPrefix = validWords.Where(w => w.StartsWith(prefix));
             
-            foreach (var validWord in validWords)
+            foreach (var validWord in validWordsByPrefix)
             {
-                if (validWord.StartsWith(prefix))
+                var newWordSquare = GetWordSquare(validWords, length, wordSquare.Concat(new[] { validWord }).ToList(), charFreq);
+                var valid = true;
+                if (newWordSquare != null)
                 {
-                    var newWordSquare = GetWordSquare(validWords, length, wordSquare.Concat(new[] { validWord }).ToList(), charFreq);
-                    if (newWordSquare != null)
+                    var newWordSquareChars = newWordSquare.SelectMany(w => w).ToList();
+                    var currentCharFreq = new Dictionary<char, int>(charFreq);
+                    foreach(var c in newWordSquareChars)
                     {
-                        var newWordSquareChars = newWordSquare.SelectMany(w => w).ToList();
-                        var currentCharFreq = new Dictionary<char, int>(charFreq);
-                        foreach(var c in newWordSquareChars)
+                        if(currentCharFreq.ContainsKey(c))
                         {
-                            if(currentCharFreq.ContainsKey(c))
-                            {
-                                currentCharFreq[c]--;
-                            }
-                            if(currentCharFreq[c] < 0)
-                            {
-                                Console.WriteLine("Invalid word square");
-                                return null;
-                            }
+                            currentCharFreq[c]--;
                         }
-                        
+                        if(currentCharFreq[c] < 0)
+                        {
+                            Console.WriteLine("Invalid word square");
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if(valid)
+                    {
                         return newWordSquare;
                     }
                 }
