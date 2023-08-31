@@ -4,7 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using System.Diagnostics;
 
 namespace wordsquare
 {
@@ -12,6 +12,9 @@ namespace wordsquare
     {
         static void Main(string[] args)
         {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             var wordLength = Int32.Parse(args[0]);
             var letters = args[1];
             var allWords = GetAllWords();
@@ -24,6 +27,9 @@ namespace wordsquare
             {
                 Console.WriteLine(word);
             }
+
+            stopwatch.Stop();
+            Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
         }
 
         public static List<string> GetAllWords()
@@ -93,8 +99,13 @@ namespace wordsquare
             return validWords;
         }
 
-        public static List<string> GetWordSquare(IEnumerable<string> validWords, int length, List<string> wordSquare,  Dictionary<char, int> charFreq)
+        public static List<string> GetWordSquare(IEnumerable<string> validWords, int length, List<string> wordSquare,  Dictionary<char,int> charFreq)
         {
+            if (wordSquare.Count > 0 && !IsValidWordSquare(wordSquare, new Dictionary<char, int>(charFreq)))
+            {
+                return null;
+            }
+            
             if (wordSquare.Count == length)
             {
                 return new List<string>(wordSquare);
@@ -114,32 +125,34 @@ namespace wordsquare
             foreach (var validWord in validWordsByPrefix)
             {
                 var newWordSquare = GetWordSquare(validWords, length, wordSquare.Concat(new[] { validWord }).ToList(), charFreq);
-                var valid = true;
+
                 if (newWordSquare != null)
                 {
-                    var newWordSquareChars = newWordSquare.SelectMany(w => w).ToList();
-                    var currentCharFreq = new Dictionary<char, int>(charFreq);
-                    foreach(var c in newWordSquareChars)
-                    {
-                        if(currentCharFreq.ContainsKey(c))
-                        {
-                            currentCharFreq[c]--;
-                        }
-                        if(currentCharFreq[c] < 0)
-                        {
-                            Console.WriteLine("Invalid word square");
-                            valid = false;
-                            break;
-                        }
-                    }
-                    if(valid)
-                    {
-                        return newWordSquare;
-                    }
+                    return newWordSquare;
                 }
             }
 
             return null; 
+        }
+
+        public static bool IsValidWordSquare(IEnumerable<string> wordSquare, Dictionary<char,int> charFreq)
+        {
+            var wordSquareChars = wordSquare.SelectMany(w => w).ToList();
+            var currentCharFreq = new Dictionary<char, int>(charFreq);
+                    
+            foreach(var c in wordSquareChars)
+            {
+                if(currentCharFreq.ContainsKey(c))
+                {
+                    currentCharFreq[c]--;
+                }
+                if(currentCharFreq[c] < 0)
+                {
+                    return false;
+                }
+            }
+            
+            return true;
         }
 
     }
